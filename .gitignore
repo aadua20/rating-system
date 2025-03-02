@@ -79,23 +79,9 @@ hs_err_pid*
 *.war
 *.ear
 
-### Config & Secrets (Sensitive Data) ###
-/config/
-/.env
-application.properties
-application.yml
-application-*.yml
-secrets.yml
-
 ### Database & Cache ###
 *.h2.db
 *.mv.db
 *.sql
 /data/
 dump.rdb  # Redis dump file
-
-### Docker ###
-docker-compose.override.yml
-
-### Node Modules (If Frontend Included) ###
-node_modules/

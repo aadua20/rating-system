@@ -1,4 +1,4 @@
-package com.leverx.rating_system;
+package com.leverx.ratingsystem;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

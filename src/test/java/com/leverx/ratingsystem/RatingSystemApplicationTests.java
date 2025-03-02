@@ -1,4 +1,4 @@
-package com.leverx.rating_system;
+package com.leverx.ratingsystem;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

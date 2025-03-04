@@ -16,3 +16,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+jwt:
+  secret: anaaduashvili
+  expiration-time: 86400000  # 24 hours

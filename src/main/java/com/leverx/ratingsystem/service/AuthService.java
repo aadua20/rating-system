@@ -9,6 +9,7 @@ import com.leverx.ratingsystem.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
     private final UserRepository userRepository;
 
     private final JwtUtil jwtUtil;
@@ -23,26 +25,28 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponse login(LoginRequest loginRequest) {
+        Authentication authentication = authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
+
+        // Extract authenticated user details
+        User user = (User) authentication.getPrincipal();
+
+        // Generate JWT token for the authenticated user
+        String jwtToken = jwtUtil.generateToken(user);
+
+        return AuthResponse.builder()
+                .email(user.getEmail())
+                .token(jwtToken)
+                .build();
+    }
+
+    private Authentication authenticateUser(String email, String password) {
         try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getEmail(),
-                            loginRequest.getPassword()
-                    )
+            return authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
             );
         } catch (Exception e) {
             throw new UserAuthException("Invalid credentials");
         }
-        User user = userRepository.
-                findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new UserAuthException(
-                        "User with username {} does not exist", loginRequest.getEmail()
-                ));
-        String jwt = jwtUtil.generateToken(user);
-        return AuthResponse.builder()
-                .email(loginRequest.getEmail())
-                .token(jwt)
-                .build();
     }
 
     public AuthResponse register(User newUser) {

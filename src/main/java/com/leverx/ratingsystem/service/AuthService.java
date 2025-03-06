@@ -45,19 +45,18 @@ public class AuthService {
                 .build();
     }
 
-    public AuthResponse register(User user) {
-        Optional<User> userDB = userRepository.findByEmail(user.getEmail());
-        if (userDB.isPresent()) {
-            throw new UserAuthException("Account with email {} already exists.", user.getEmail());
+    public AuthResponse register(User newUser) {
+        Optional<User> existingUser = userRepository.findByEmail(newUser.getEmail());
+        if (existingUser.isPresent()) {
+            throw new UserAuthException("Account with email {} already exists.", newUser.getEmail());
         }
-        Optional<User> userDB1 = userRepository.findByEmail(user.getUsername());
-        if (userDB1.isPresent()) {
-            throw new UserAuthException("Account with username {} already exists.", user.getUsername());
-        }
-        userRepository.save(user);
-        String jwt = jwtUtil.generateToken(user);
+
+        userRepository.save(newUser);
+        String jwtToken = jwtUtil.generateToken(newUser);
+
         return AuthResponse.builder()
-                .token(jwt)
+                .email(newUser.getEmail())
+                .token(jwtToken)
                 .build();
     }
 }

@@ -6,13 +6,13 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -24,29 +24,15 @@ public class JwtUtil {
     @Value("${jwt.expiration-time}")
     private long expirationTime;
 
-    public String extractUsername(String jwt) {
-        return extractClaim(jwt, Claims::getSubject);
-    }
+    public String generateToken(UserDetails userDetails) {
+        HashMap<String, Object> claims = new HashMap<>();
 
-    private Claims extractAllClaims(String jwt) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(jwt)
-                .getBody();
-    }
+        GrantedAuthority role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Role not found"));
 
-    private Key getSignInKey() {
-        byte[] bytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(bytes);
-    }
+        claims.put("role", role);
 
-    public <T> T extractClaim(String jwt, Function<Claims, T> claimsTFunction) {
-        Claims claims = extractAllClaims(jwt);
-        return claimsTFunction.apply(claims);
-    }
-
-    public String generateToken(Map<String, Object> claims, UserDetails userDetails) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
@@ -56,24 +42,36 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateToken(UserDetails userDetails) {
-        HashMap<String, Object> claims = new HashMap<>();
-        claims.put("role", userDetails.getAuthorities().stream()
-                .findFirst().orElseThrow(() -> new RuntimeException("Role not found")).getAuthority());
-        return generateToken(claims, userDetails);
+    private Key getSignInKey() {
+        byte[] bytes = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(bytes);
     }
 
-    public boolean isTokenValid(String jwt, UserDetails userDetails) {
-        String username = extractUsername(jwt);
-        return (username.equals(userDetails.getUsername()))
-                && !isTokenExpired(jwt);
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        return getUsername(token).equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    private boolean isTokenExpired(String jwt) {
-        return extractExpiration(jwt).before(new Date());
+    public String getUsername(String token) {
+        return getClaim(token, Claims::getSubject);
     }
 
-    private Date extractExpiration(String jwt) {
-        return extractClaim(jwt, Claims::getExpiration);
+    public Date getExpirationDate(String token) {
+        return getClaim(token, Claims::getExpiration);
+    }
+
+    public boolean isTokenExpired(String token) {
+        return getExpirationDate(token).before(new Date());
+    }
+
+    public <T> T getClaim(String token, Function<Claims, T> claimsResolver) {
+        return claimsResolver.apply(getAllClaims(token));
+    }
+
+    private Claims getAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSignInKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

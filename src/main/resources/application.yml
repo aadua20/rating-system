@@ -18,5 +18,5 @@ spring:
     show-sql: true
 
 jwt:
-  secret: anaaduashvili
+  secret: anaaduashvilianaaduashvilianaaduashvilianaaduashvili
   expiration-time: 86400000  # 24 hours

@@ -19,8 +19,8 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity<Comment> addComment(@PathVariable Long sellerId, @RequestParam Long authorId, @RequestParam String comment) {
-        return ResponseEntity.ok(commentService.addComment(sellerId, authorId, comment));
+    public ResponseEntity<Comment> addComment(@PathVariable Long sellerId, @RequestParam Long authorId, @RequestParam String comment, @RequestParam Integer rating) {
+        return ResponseEntity.ok(commentService.addComment(sellerId, authorId, comment, rating));
     }
 
     @GetMapping

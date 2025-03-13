@@ -19,7 +19,7 @@ public class CommentService {
         this.userRepository = userRepository;
     }
 
-    public Comment addComment(Long sellerId,  Long authorId, String message) {
+    public Comment addComment(Long sellerId,  Long authorId, String message, Integer rating) {
         User seller = userRepository.findById(sellerId).orElseThrow(() -> new RuntimeException("Seller not found"));
         User author = userRepository.findById(authorId).orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -27,6 +27,7 @@ public class CommentService {
         comment.setSeller(seller);
         comment.setAuthor(author);
         comment.setMessage(message);
+        comment.setRating(rating);
         comment.setApproved(false);
 
         return commentRepository.save(comment);

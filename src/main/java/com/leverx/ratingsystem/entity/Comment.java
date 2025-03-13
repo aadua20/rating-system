@@ -30,5 +30,8 @@ public class Comment {
 
     private boolean approved = false;
 
+    @Column(nullable = false)
+    private Integer rating;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }

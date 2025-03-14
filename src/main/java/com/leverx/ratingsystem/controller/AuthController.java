@@ -9,10 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -21,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
-
     private final UserMapper userMapper;
 
     @PostMapping("/login")
@@ -31,9 +27,18 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> userSignUp(@Valid @RequestBody final RegisterRequest registerRequest) {
+    public ResponseEntity<String> userSignUp(@Valid @RequestBody final RegisterRequest registerRequest) {
         log.info("Signing up...");
-        AuthResponse authResponse = authService.register(userMapper.registerDTOToEntity(registerRequest));
-        return ResponseEntity.ok(authResponse);
+        String responseMessage = authService.register(userMapper.registerDTOToEntity(registerRequest));
+        return ResponseEntity.ok(responseMessage);
+    }
+
+    @GetMapping("/confirm")
+    public ResponseEntity<String> confirmEmail(
+            @RequestParam("email") String email,
+            @RequestParam("code") String code) {
+        log.info("Confirming email for {}", email);
+        String confirmationResponse = authService.confirmEmail(email, code);
+        return ResponseEntity.ok(confirmationResponse);
     }
 }

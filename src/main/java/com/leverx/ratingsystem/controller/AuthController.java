@@ -22,13 +22,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> userSignIn(@Valid @RequestBody final LoginRequest loginRequest) {
-        log.info("Logging in...");
+        log.info("Login attempt for email: {}", loginRequest.getEmail());
         return ResponseEntity.ok(authService.login(loginRequest));
     }
 
     @PostMapping("/register")
     public ResponseEntity<String> userSignUp(@Valid @RequestBody final RegisterRequest registerRequest) {
-        log.info("Signing up...");
+        log.info("User registration attempt: {}", registerRequest.getEmail());
         String responseMessage = authService.register(userMapper.registerDTOToEntity(registerRequest));
         return ResponseEntity.ok(responseMessage);
     }
@@ -37,7 +37,7 @@ public class AuthController {
     public ResponseEntity<String> confirmEmail(
             @RequestParam("email") String email,
             @RequestParam("code") String code) {
-        log.info("Confirming email for {}", email);
+        log.info("Confirming email: {}", email);
         String confirmationResponse = authService.confirmEmail(email, code);
         return ResponseEntity.ok(confirmationResponse);
     }

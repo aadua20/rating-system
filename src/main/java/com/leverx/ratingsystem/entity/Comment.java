@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,17 +22,17 @@ public class Comment {
     private String message;
 
     @ManyToOne
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "author_id")
     private User author;
 
     @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    private boolean approved = false;
+    private boolean approved;
 
     @Column(nullable = false)
     private Integer rating;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 }

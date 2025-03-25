@@ -6,6 +6,7 @@ import com.leverx.ratingsystem.repository.CommentRepository;
 import com.leverx.ratingsystem.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,16 +20,17 @@ public class CommentService {
         this.userRepository = userRepository;
     }
 
-    public Comment addComment(Long sellerId,  Long authorId, String message, Integer rating) {
+    public Comment addComment(Long sellerId, User author, String message, Integer rating) {
         User seller = userRepository.findById(sellerId).orElseThrow(() -> new RuntimeException("Seller not found"));
-        User author = userRepository.findById(authorId).orElseThrow(() -> new RuntimeException("User not found"));
 
-        Comment comment = new Comment();
-        comment.setSeller(seller);
-        comment.setAuthor(author);
-        comment.setMessage(message);
-        comment.setRating(rating);
-        comment.setApproved(false);
+        Comment comment = Comment.builder()
+                .seller(seller)
+                .author(author)
+                .message(message)
+                .rating(rating)
+                .createdAt(LocalDateTime.now())
+                .approved(false)
+                .build();
 
         return commentRepository.save(comment);
     }
@@ -52,9 +54,9 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    public void deleteComment(Long id, Long authorId) {
+    public void deleteComment(Long id, User user) {
         Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("Comment not found"));
-        if (!comment.getAuthor().getId().equals(authorId)) {
+        if (comment.getAuthor() == null || user == null || !comment.getAuthor().getId().equals(user.getId())) {
             throw new RuntimeException("You can only delete your own comments");
         }
         commentRepository.delete(comment);

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leverx.ratingsystem.dto.AuthResponse;
 import com.leverx.ratingsystem.dto.LoginRequest;
+import com.leverx.ratingsystem.dto.PasswordResetRequest;
 import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.exception.UserAuthException;
 import com.leverx.ratingsystem.repository.UserRepository;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -30,6 +32,7 @@ public class AuthService {
     private final EmailService emailService;
     private final RedisService redisService;
     private final ObjectMapper objectMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthResponse login(LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
@@ -85,7 +88,7 @@ public class AuthService {
         }
 
         // Send confirmation email
-        String confirmationLink = "http://localhost:8080/auth/confirm?email=" + newUser.getEmail() + "&code=" + confirmationCode;
+        String confirmationLink = "http://localhost:8080/rating-system/auth/confirm?email=" + newUser.getEmail() + "&code=" + confirmationCode;
         emailService.sendConfirmationEmail(newUser.getEmail(), confirmationLink);
 
         return "Registration successful! Please check your email to confirm your account.";
@@ -106,5 +109,46 @@ public class AuthService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error processing user data during confirmation", e);
         }
+    }
+
+    public String forgotPassword(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            throw new UserAuthException("User not found.");
+        }
+
+        String resetCode = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+        redisService.storeResetCode(email, resetCode);
+
+        emailService.sendPasswordResetEmail(email, resetCode);
+
+        return "Password reset code sent to your email.";
+    }
+
+    public boolean checkResetCode(String email, String code) {
+        return redisService.validateResetCode(email, code);
+    }
+
+    public String resetPassword(PasswordResetRequest resetRequest) {
+        String email = resetRequest.getEmail();
+        String code = resetRequest.getCode();
+        String newPassword = resetRequest.getNewPassword();
+
+        if (!redisService.validateResetCode(email, code)) {
+            throw new UserAuthException("Invalid or expired reset code.");
+        }
+
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            throw new UserAuthException("User not found.");
+        }
+
+        User user = userOptional.get();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        redisService.removeResetCode(email);
+
+        return "Password has been successfully reset.";
     }
 }

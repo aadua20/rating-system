@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 public class RedisService {
 
     private final StringRedisTemplate redisTemplate;
+    private static final long CONFIRMATION_CODE_EXPIRATION = 24;
+    private static final long RESET_CODE_EXPIRATION = 10;
 
     public RedisService(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -25,7 +27,7 @@ public class RedisService {
      * Stores the pending user data in Redis temporarily until confirmation.
      */
     public void storeUserPendingConfirmation(String email, String code, String userJson) {
-        redisTemplate.opsForValue().set("pending:" + email, userJson, 24, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set("pending:" + email, userJson, CONFIRMATION_CODE_EXPIRATION, TimeUnit.HOURS);
         storeConfirmationCode(email, code);
     }
 
@@ -51,7 +53,7 @@ public class RedisService {
      * Checks if an email confirmation is still pending (user has not confirmed yet).
      */
     public boolean isEmailUnconfirmed(String email) {
-        return redisTemplate.hasKey(email);
+        return Boolean.TRUE.equals(redisTemplate.hasKey(email));
     }
 
     /**
@@ -60,5 +62,27 @@ public class RedisService {
     public void removeConfirmationCode(String email) {
         redisTemplate.delete(email);
         redisTemplate.delete("pending:" + email);
+    }
+
+    /**
+     * Stores a password reset code in Redis with a 10-minute expiration time.
+     */
+    public void storeResetCode(String email, String code) {
+        redisTemplate.opsForValue().set("reset:" + email, code, RESET_CODE_EXPIRATION, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Validates the provided password reset code.
+     */
+    public boolean validateResetCode(String email, String code) {
+        String storedCode = redisTemplate.opsForValue().get("reset:" + email);
+        return storedCode != null && storedCode.equals(code);
+    }
+
+    /**
+     * Removes the password reset code from Redis after it has been used.
+     */
+    public void removeResetCode(String email) {
+        redisTemplate.delete("reset:" + email);
     }
 }

@@ -39,11 +39,6 @@ public class GameObjectController {
         return gameObject.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<List<GameObject>> getUserGameObjects(@AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(gameObjectService.getGameObjectsByUser(userDetails.getUsername()));
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<GameObject> updateGameObject(
             @PathVariable Long id,

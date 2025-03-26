@@ -7,6 +7,8 @@ import com.leverx.ratingsystem.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,9 +30,10 @@ public class CommentController {
     public ResponseEntity<Comment> addComment(
             @PathVariable Long sellerId,
             @RequestParam String comment,
-            @RequestParam Integer rating) {
+            @RequestParam Integer rating,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        User author = userService.getAuthenticatedUser(); // Null if anonymous
+        User author = userService.getAuthenticatedUser(userDetails); // Null if anonymous
         return ResponseEntity.ok(commentService.addComment(sellerId, author, comment, rating));
     }
 
@@ -55,8 +58,8 @@ public class CommentController {
     }
 
     @DeleteMapping("comments/{id}")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
-        User user = userService.getAuthenticatedUser();
+    public ResponseEntity<Void> deleteComment(@PathVariable Long id,  @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.getAuthenticatedUser(userDetails);
         commentService.deleteComment(id, user);
         return ResponseEntity.noContent().build();
     }

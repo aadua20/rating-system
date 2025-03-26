@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Builder
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,6 +27,6 @@ public class GameObject {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

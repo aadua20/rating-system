@@ -1,5 +1,6 @@
 package com.leverx.ratingsystem.dto;
 
+import com.leverx.ratingsystem.entity.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -28,5 +29,5 @@ public class RegisterRequest {
     private String password;
 
     @NotBlank
-    private String role;
+    private Role role;
 }

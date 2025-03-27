@@ -28,6 +28,7 @@ public class SecurityConfig {
             "/comments/**",
             "/objects/**",
             "/ratings/**",
+            "/admin/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/v3/**",

@@ -24,8 +24,9 @@ public class UserMapper {
                 .lastName(registerRequest.getLastName())
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .role(Role.valueOf(registerRequest.getRole()))
+                .role(registerRequest.getRole())
                 .createdAt(LocalDateTime.now())
+                .isApproved(false)
                 .build();
     }
 }

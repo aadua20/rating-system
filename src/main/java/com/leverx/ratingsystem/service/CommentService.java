@@ -21,7 +21,7 @@ public class CommentService {
     }
 
     public Comment addComment(Long sellerId, User author, String message, Integer rating) {
-        User seller = userRepository.findById(sellerId).orElseThrow(() -> new RuntimeException("Seller not found"));
+        User seller = userRepository.findByIdAndIsApproved(sellerId, true).orElseThrow(() -> new RuntimeException("Seller not found"));
 
         Comment comment = Comment.builder()
                 .seller(seller)
@@ -36,7 +36,7 @@ public class CommentService {
     }
 
     public List<Comment> getSellerComments(Long sellerId, boolean onlyApproved) {
-        User seller = userRepository.findById(sellerId).orElseThrow(() -> new RuntimeException("Seller not found"));
+        User seller = userRepository.findByIdAndIsApproved(sellerId, true).orElseThrow(() -> new RuntimeException("Seller not found"));
         return commentRepository.findBySellerAndApproved(seller, onlyApproved);
     }
 
@@ -48,10 +48,15 @@ public class CommentService {
         return commentRepository.findById(id);
     }
 
-    public Comment approveComment(Long id) {
+    public void approveComment(Long id) {
         Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("Comment not found"));
         comment.setApproved(true);
-        return commentRepository.save(comment);
+        commentRepository.save(comment);
+    }
+
+    public void declineComment(Long id) {
+        Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("Comment not found"));
+        commentRepository.delete(comment);
     }
 
     public void deleteComment(Long id, User user) {

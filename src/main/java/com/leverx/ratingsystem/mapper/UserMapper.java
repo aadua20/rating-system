@@ -1,7 +1,7 @@
 package com.leverx.ratingsystem.mapper;
 
 import com.leverx.ratingsystem.dto.RegisterRequest;
-import com.leverx.ratingsystem.entity.Role;
+import com.leverx.ratingsystem.dto.UserDTO;
 import com.leverx.ratingsystem.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +14,16 @@ import java.time.LocalDateTime;
 public class UserMapper {
 
     private final PasswordEncoder passwordEncoder;
+
+    public static UserDTO userToUserDTO(User user) {
+        return UserDTO.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .rating(0.0)
+                .build();
+    }
 
     public User registerDTOToEntity(RegisterRequest registerRequest) {
         if (registerRequest == null) {

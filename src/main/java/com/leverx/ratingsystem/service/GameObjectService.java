@@ -3,7 +3,7 @@ package com.leverx.ratingsystem.service;
 import com.leverx.ratingsystem.entity.GameObject;
 import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.repository.GameObjectRepository;
-import com.leverx.ratingsystem.repository.UserRepository;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,16 +14,20 @@ import java.util.Optional;
 public class GameObjectService {
 
     private final GameObjectRepository gameObjectRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public GameObjectService(GameObjectRepository gameObjectRepository, UserRepository userRepository) {
+    public GameObjectService(GameObjectRepository gameObjectRepository, UserService userService) {
         this.gameObjectRepository = gameObjectRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
-    public GameObject createGameObject(String title, String text, String username) {
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new RuntimeException("User not authorized"));
+    public GameObject createGameObject(String title, String text, UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new RuntimeException("User not authorized");
+        }
+
+        User user = userService.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         GameObject gameObject = GameObject.builder()
                 .title(title)

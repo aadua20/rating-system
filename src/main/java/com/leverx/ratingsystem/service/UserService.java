@@ -21,6 +21,13 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    public void save(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null");
+        }
+        userRepository.save(user);
+    }
+
     public User getAuthenticatedUser(UserDetails userDetails) {
         if (userDetails != null) {
             String email = userDetails.getUsername();
@@ -55,5 +62,14 @@ public class UserService {
         }
 
         userRepository.delete(seller);
+    }
+
+    public User findSeller(Long sellerId) {
+        return userRepository.findByIdAndIsApproved(sellerId, true)
+                .orElseThrow(() -> new RuntimeException("Seller not found"));
+    }
+
+    public List<User> findByRoleAndIsApproved(Role role, boolean approved) {
+        return userRepository.findByRoleAndIsApproved(role, approved);
     }
 }

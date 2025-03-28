@@ -1,9 +1,9 @@
 package com.leverx.ratingsystem.service;
 
 import com.leverx.ratingsystem.entity.Comment;
+import com.leverx.ratingsystem.entity.Role;
 import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.repository.CommentRepository;
-import com.leverx.ratingsystem.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,15 +13,15 @@ import java.util.Optional;
 @Service
 public class CommentService {
     private final CommentRepository commentRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public CommentService(CommentRepository commentRepository, UserRepository userRepository) {
+    public CommentService(CommentRepository commentRepository, UserService userService) {
         this.commentRepository = commentRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     public Comment addComment(Long sellerId, User author, String message, Integer rating) {
-        User seller = userRepository.findByIdAndIsApproved(sellerId, true).orElseThrow(() -> new RuntimeException("Seller not found"));
+        User seller = userService.findSeller(sellerId);
 
         Comment comment = Comment.builder()
                 .seller(seller)
@@ -36,7 +36,7 @@ public class CommentService {
     }
 
     public List<Comment> getSellerComments(Long sellerId, boolean onlyApproved) {
-        User seller = userRepository.findByIdAndIsApproved(sellerId, true).orElseThrow(() -> new RuntimeException("Seller not found"));
+        User seller = userService.findSeller(sellerId);
         return commentRepository.findBySellerAndApproved(seller, onlyApproved);
     }
 
@@ -60,8 +60,13 @@ public class CommentService {
     }
 
     public void deleteComment(Long id, User user) {
-        Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("Comment not found"));
-        if (comment.getAuthor() == null || user == null || !comment.getAuthor().getId().equals(user.getId())) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        boolean isAuthor = comment.getAuthor() != null && user != null && comment.getAuthor().getId().equals(user.getId());
+        boolean isAdmin = user != null && Role.ADMIN.equals(user.getRole());
+
+        if (!isAuthor && !isAdmin) {
             throw new RuntimeException("You can only delete your own comments");
         }
         commentRepository.delete(comment);

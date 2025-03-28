@@ -2,9 +2,9 @@ package com.leverx.ratingsystem.controller;
 
 import com.leverx.ratingsystem.entity.GameObject;
 import com.leverx.ratingsystem.service.GameObjectService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class GameObjectController {
             @RequestParam String title,
             @RequestParam String text,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(gameObjectService.createGameObject(title, text, userDetails.getUsername()));
+        return ResponseEntity.ok(gameObjectService.createGameObject(title, text, userDetails));
     }
 
     @GetMapping

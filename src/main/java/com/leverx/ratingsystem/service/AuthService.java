@@ -7,7 +7,6 @@ import com.leverx.ratingsystem.dto.LoginRequest;
 import com.leverx.ratingsystem.dto.PasswordResetRequest;
 import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.exception.UserAuthException;
-import com.leverx.ratingsystem.repository.UserRepository;
 import com.leverx.ratingsystem.security.JwtUtil;
 import com.leverx.ratingsystem.util.EmailService;
 import com.leverx.ratingsystem.util.RedisService;
@@ -26,13 +25,13 @@ import java.util.UUID;
 @Slf4j
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final UserService userService;
     private final EmailService emailService;
     private final RedisService redisService;
     private final ObjectMapper objectMapper;
-    private final PasswordEncoder passwordEncoder;
 
     public AuthResponse login(LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
@@ -43,7 +42,7 @@ public class AuthService {
         }
 
         // Fetch user from the database only if email is confirmed
-        Optional<User> userOptional = userRepository.findByEmail(email);
+        Optional<User> userOptional = userService.findByEmail(email);
         if (userOptional.isEmpty()) {
             throw new UserAuthException("User not found.");
         }
@@ -73,7 +72,7 @@ public class AuthService {
     }
 
     public String register(User newUser) {
-        Optional<User> existingUser = userRepository.findByEmail(newUser.getEmail());
+        Optional<User> existingUser = userService.findByEmail(newUser.getEmail());
         if (existingUser.isPresent()) {
             throw new UserAuthException("An account with this email already exists.");
         }
@@ -103,7 +102,7 @@ public class AuthService {
 
         try {
             User confirmedUser = objectMapper.readValue(userJson, User.class);
-            userRepository.save(confirmedUser);
+            userService.save(confirmedUser);
             redisService.removeConfirmationCode(email);
             return "Email confirmed successfully! You can now log in.";
         } catch (JsonProcessingException e) {
@@ -112,7 +111,7 @@ public class AuthService {
     }
 
     public String forgotPassword(String email) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
+        Optional<User> userOptional = userService.findByEmail(email);
         if (userOptional.isEmpty()) {
             throw new UserAuthException("User not found.");
         }
@@ -138,14 +137,14 @@ public class AuthService {
             throw new UserAuthException("Invalid or expired reset code.");
         }
 
-        Optional<User> userOptional = userRepository.findByEmail(email);
+        Optional<User> userOptional = userService.findByEmail(email);
         if (userOptional.isEmpty()) {
             throw new UserAuthException("User not found.");
         }
 
         User user = userOptional.get();
         user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
+        userService.save(user);
 
         redisService.removeResetCode(email);
 

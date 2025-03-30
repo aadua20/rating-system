@@ -14,20 +14,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegisterRequest {
-    @NotBlank
+
     private String firstName;
-
-    @NotBlank
     private String lastName;
-
-    @NotBlank
-    @Email
     private String email;
-
-    @NotBlank
-    @Size(min = 6)
     private String password;
-
-    @NotBlank
     private Role role;
 }

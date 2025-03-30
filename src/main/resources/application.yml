@@ -19,7 +19,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: aduashvili2002ana@gmail.com
-    password: adu
+    password: stjj sqhp ufwp mrgd
     properties:
       mail:
         smtp:

@@ -3,6 +3,7 @@ package com.leverx.ratingsystem.service;
 import com.leverx.ratingsystem.entity.GameObject;
 import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.repository.GameObjectRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class GameObjectService {
 
     private final GameObjectRepository gameObjectRepository;
@@ -60,7 +62,9 @@ public class GameObjectService {
         gameObject.setText(newText);
         gameObject.setUpdatedAt(LocalDateTime.now());
 
-        return gameObjectRepository.save(gameObject);
+        GameObject updated = gameObjectRepository.save(gameObject);
+        log.info("Game object ID {} updated by user {}", id, username);
+        return updated;
     }
 
     public void deleteGameObject(Long id, String username) {
@@ -72,5 +76,6 @@ public class GameObjectService {
         }
 
         gameObjectRepository.delete(gameObject);
+        log.info("Game object ID {} deleted by user {}", id, username);
     }
 }

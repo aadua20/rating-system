@@ -3,6 +3,7 @@ package com.leverx.ratingsystem.service;
 import com.leverx.ratingsystem.entity.Role;
 import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
 
@@ -26,6 +28,7 @@ public class UserService {
             throw new IllegalArgumentException("User cannot be null");
         }
         userRepository.save(user);
+        log.info("User saved: {}", user.getEmail());
     }
 
     public User getAuthenticatedUser(UserDetails userDetails) {
@@ -51,6 +54,7 @@ public class UserService {
 
         seller.setApproved(true);
         userRepository.save(seller);
+        log.info("Seller approved: {}", seller.getEmail());
     }
 
     public void declineSeller(Long sellerId) {
@@ -62,6 +66,7 @@ public class UserService {
         }
 
         userRepository.delete(seller);
+        log.info("Seller declined and removed: {}", seller.getEmail());
     }
 
     public User findSeller(Long sellerId) {

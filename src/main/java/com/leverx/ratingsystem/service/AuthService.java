@@ -35,25 +35,22 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
+        log.info("Login attempt for email: {}", email);
 
-        // Check if email is still unconfirmed in Redis
         if (redisService.isEmailUnconfirmed(email)) {
             throw new UserAuthException("Email is not confirmed. Please check your email.");
         }
 
-        // Fetch user from the database only if email is confirmed
         Optional<User> userOptional = userService.findByEmail(email);
         if (userOptional.isEmpty()) {
             throw new UserAuthException("User not found.");
         }
 
         User user = userOptional.get();
-
-        // Authenticate user
         authenticateUser(email, loginRequest.getPassword());
 
-        // Generate JWT token
         String jwtToken = jwtUtil.generateToken(user);
+        log.info("Login successful for email: {}", email);
 
         return AuthResponse.builder()
                 .email(user.getEmail())
@@ -66,35 +63,38 @@ public class AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );
+            log.info("Authentication successful for email: {}", email);
         } catch (Exception e) {
             throw new UserAuthException("Invalid credentials");
         }
     }
 
     public String register(User newUser) {
-        Optional<User> existingUser = userService.findByEmail(newUser.getEmail());
-        if (existingUser.isPresent()) {
+        String email = newUser.getEmail();
+        log.info("Registration attempt for email: {}", email);
+
+        if (userService.findByEmail(email).isPresent()) {
             throw new UserAuthException("An account with this email already exists.");
         }
 
-        // Generate confirmation code and store user data in Redis
         String confirmationCode = UUID.randomUUID().toString();
         try {
             String userJson = objectMapper.writeValueAsString(newUser);
-            redisService.storeUserPendingConfirmation(newUser.getEmail(), confirmationCode, userJson);
+            redisService.storeUserPendingConfirmation(email, confirmationCode, userJson);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error processing user data for Redis storage", e);
         }
 
-        // Send confirmation email
-        String confirmationLink = "http://localhost:8080/rating-system/auth/confirm?email=" + newUser.getEmail() + "&code=" + confirmationCode;
-        emailService.sendConfirmationEmail(newUser.getEmail(), confirmationLink);
+        String confirmationLink = "http://localhost:8080/rating-system/auth/confirm?email=" + email + "&code=" + confirmationCode;
+        emailService.sendConfirmationEmail(email, confirmationLink);
+        log.info("Confirmation email sent to: {}", email);
 
         return "Registration successful! Please check your email to confirm your account.";
     }
 
     public String confirmEmail(String email, String code) {
-        // Validate confirmation code and retrieve user data from Redis
+        log.info("Email confirmation attempt for: {}", email);
+
         String userJson = redisService.validateAndRetrievePendingUser(email, code);
         if (userJson == null) {
             throw new UserAuthException("Invalid or expired confirmation code.");
@@ -111,6 +111,8 @@ public class AuthService {
     }
 
     public String forgotPassword(String email) {
+        log.info("Password reset request for email: {}", email);
+
         Optional<User> userOptional = userService.findByEmail(email);
         if (userOptional.isEmpty()) {
             throw new UserAuthException("User not found.");
@@ -120,18 +122,26 @@ public class AuthService {
         redisService.storeResetCode(email, resetCode);
 
         emailService.sendPasswordResetEmail(email, resetCode);
+        log.info("Password reset code sent to email: {}", email);
 
         return "Password reset code sent to your email.";
     }
 
     public boolean checkResetCode(String email, String code) {
-        return redisService.validateResetCode(email, code);
+        log.info("Checking password reset code for email: {}", email);
+        boolean isValid = redisService.validateResetCode(email, code);
+        if (!isValid) {
+            log.warn("Invalid or expired reset code for email: {}", email);
+        }
+        return isValid;
     }
 
     public String resetPassword(PasswordResetRequest resetRequest) {
         String email = resetRequest.getEmail();
         String code = resetRequest.getCode();
         String newPassword = resetRequest.getNewPassword();
+
+        log.info("Resetting password for email: {}", email);
 
         if (!redisService.validateResetCode(email, code)) {
             throw new UserAuthException("Invalid or expired reset code.");
@@ -148,6 +158,7 @@ public class AuthService {
 
         redisService.removeResetCode(email);
 
+        log.info("Password reset successful for email: {}", email);
         return "Password has been successfully reset.";
     }
 }

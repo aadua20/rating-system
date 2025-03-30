@@ -4,6 +4,7 @@ import com.leverx.ratingsystem.entity.Comment;
 import com.leverx.ratingsystem.entity.Role;
 import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.repository.CommentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -11,7 +12,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class CommentService {
+
     private final CommentRepository commentRepository;
     private final UserService userService;
 
@@ -32,7 +35,9 @@ public class CommentService {
                 .approved(false)
                 .build();
 
-        return commentRepository.save(comment);
+        Comment savedComment = commentRepository.save(comment);
+        log.info("New comment added by user {} for seller {} (approved: false)", author.getId(), sellerId);
+        return savedComment;
     }
 
     public List<Comment> getSellerComments(Long sellerId, boolean onlyApproved) {
@@ -49,14 +54,20 @@ public class CommentService {
     }
 
     public void approveComment(Long id) {
-        Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("Comment not found"));
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
         comment.setApproved(true);
         commentRepository.save(comment);
+        log.info("Comment {} approved by admin", id);
     }
 
     public void declineComment(Long id) {
-        Comment comment = commentRepository.findById(id).orElseThrow(() -> new RuntimeException("Comment not found"));
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
         commentRepository.delete(comment);
+        log.info("Comment {} declined and deleted by admin", id);
     }
 
     public void deleteComment(Long id, User user) {
@@ -69,6 +80,8 @@ public class CommentService {
         if (!isAuthor && !isAdmin) {
             throw new RuntimeException("You can only delete your own comments");
         }
+
         commentRepository.delete(comment);
+        log.info("Comment {} deleted by {}", id, isAdmin ? "admin" : "author");
     }
 }

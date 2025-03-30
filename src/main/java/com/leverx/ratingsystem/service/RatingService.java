@@ -6,6 +6,7 @@ import com.leverx.ratingsystem.entity.Role;
 import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.mapper.UserMapper;
 import com.leverx.ratingsystem.repository.CommentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class RatingService {
 
     private final CommentRepository commentRepository;
@@ -27,12 +29,11 @@ public class RatingService {
 
     public UserDTO calculateSellerRating(Long sellerId) {
         User seller = userService.findSeller(sellerId);
-
         List<Comment> approvedComments = commentRepository.findBySellerAndApproved(seller, true);
-
         UserDTO userDTO = UserMapper.userToUserDTO(seller);
 
         if (approvedComments.isEmpty()) {
+            log.info("No approved comments found for seller ID {}. Rating is default.", sellerId);
             return userDTO;
         }
 
@@ -42,11 +43,13 @@ public class RatingService {
                 .doubleValue();
 
         userDTO.setRating(rating);
+        log.info("Calculated rating {} for seller ID {}", rating, sellerId);
 
         return userDTO;
     }
 
     public List<UserDTO> getTopSellers() {
+        log.info("Retrieving top sellers by rating");
         return userService.findByRoleAndIsApproved(Role.SELLER, true).stream()
                 .map(user -> calculateSellerRating(user.getId()))
                 .sorted(Comparator.comparingDouble(UserDTO::getRating).reversed())
@@ -54,7 +57,8 @@ public class RatingService {
     }
 
     public List<UserDTO> filterSellersByRating(double minRating, double maxRating) {
-        return userService.findByRoleAndIsApproved(com.leverx.ratingsystem.entity.Role.SELLER, true).stream()
+        log.info("Filtering sellers with rating between {} and {}", minRating, maxRating);
+        return userService.findByRoleAndIsApproved(Role.SELLER, true).stream()
                 .map(user -> calculateSellerRating(user.getId()))
                 .filter(seller -> seller.getRating() >= minRating && seller.getRating() <= maxRating)
                 .collect(Collectors.toList());

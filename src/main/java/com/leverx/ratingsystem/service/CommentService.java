@@ -36,7 +36,7 @@ public class CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
-        log.info("New comment added by user {} for seller {} (approved: false)", author.getId(), sellerId);
+        log.info("New comment added for seller {} (approved: false)", sellerId);
         return savedComment;
     }
 

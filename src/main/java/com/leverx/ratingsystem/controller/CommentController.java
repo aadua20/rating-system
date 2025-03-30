@@ -5,8 +5,11 @@ import com.leverx.ratingsystem.entity.User;
 import com.leverx.ratingsystem.service.CommentService;
 import com.leverx.ratingsystem.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,7 +39,8 @@ public class CommentController {
     public ResponseEntity<Comment> addComment(
             @PathVariable Long sellerId,
             @RequestParam String comment,
-            @RequestParam Integer rating,
+            @Parameter(description = "Rating from 1 to 5")
+            @RequestParam @Min(1) @Max(5)Integer rating,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         User author = userService.getAuthenticatedUser(userDetails);
